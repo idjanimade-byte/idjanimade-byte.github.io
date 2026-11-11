@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Awari</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Awari">
+<meta name="theme-color" content="#47281a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{
+  --bg:#efe6d2;--ink:#2a1a10;--muted:#6f5a48;--panel:#e2d6bc;
+  --wood:#5a3420;--wood2:#47281a;--pit:#2b150a;--glow:#f2c230;--cap:#d9534f;
+  --yel:#f2c230;--grn:#3fae5a;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14182b;--ink:#f2ead3;--muted:#a9a79a;--panel:#1f2540;}}
+:root[data-theme="dark"]{--bg:#14182b;--ink:#f2ead3;--muted:#a9a79a;--panel:#1f2540;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center}
+main{width:100%;max-width:600px;padding:16px 16px 28px}
+h1{font-size:2.4rem;font-weight:800;margin:4px 0 2px;letter-spacing:-.02em}
+.sub{margin:0 0 14px;color:var(--muted);font-size:.95rem}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+select,input,button.ctl{font:inherit;font-size:.9rem;padding:8px 10px;border-radius:10px;border:1px solid var(--muted);background:var(--panel);color:var(--ink)}
+button.ctl{font-weight:600;cursor:pointer}
+input{width:7.5em;text-transform:uppercase}
+#remote{display:none;margin-bottom:12px;background:var(--panel);border-radius:14px;padding:10px 12px;font-size:.9rem;line-height:1.45}
+#remote p{margin:8px 0 0;color:var(--muted)}
+.score{display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px}
+.score b{font-size:1.5rem;font-weight:800}
+.score span{color:var(--muted);font-size:.95rem}
+.score.on span{color:var(--ink);font-weight:600}
+.board{background:
+ repeating-linear-gradient(92deg,rgba(255,255,255,.035) 0 1px,transparent 1px 7px),
+ repeating-linear-gradient(88deg,rgba(0,0,0,.25) 0 2px,transparent 2px 13px),
+ linear-gradient(165deg,#2a2220 0%,#171211 55%,#0e0a09 100%);
+ border-radius:30px;padding:16px 14px;display:grid;grid-template-columns:repeat(6,1fr);gap:9px;
+ border:2px solid #3b2f2a;transform:rotateX(24deg);transform-origin:50% 70%;
+ box-shadow:inset 0 2px 4px rgba(255,255,255,.14),inset 0 -6px 14px rgba(0,0,0,.6),0 4px 0 #1a1311,0 8px 0 #100b09,0 12px 0 #080505,0 26px 30px rgba(0,0,0,.55)}
+.pit{aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 50% 28%,#050303 0%,#120c0a 55%,#241915 100%);position:relative;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:1px;padding:7px;overflow:hidden;box-shadow:inset 0 6px 10px rgba(0,0,0,.9),inset 0 -2px 3px rgba(255,255,255,.1),0 1px 0 rgba(255,255,255,.12);font:inherit;cursor:default;transition:transform .12s}
+.pit i{width:9px;height:9px;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.8),inset -1px -2px 2px rgba(0,0,0,.4);position:relative}
+.pit i::after{content:"";position:absolute;left:22%;top:16%;width:34%;height:30%;border-radius:50%;background:rgba(255,255,255,.75);filter:blur(.4px)}
+.pit i:nth-child(3n){transform:translate(1px,-1px)}.pit i:nth-child(5n){transform:translate(-1px,1px)}
+
+.pit .n{position:absolute;right:5px;bottom:2px;font-size:.72rem;font-weight:800;color:#f2ead3;text-shadow:0 1px 2px #000}
+.pit.ok{cursor:pointer;outline:2px solid #fff;outline-offset:-2px}
+.pit.ok:active{transform:scale(.94)}
+.pit.ok:focus-visible{outline:3px solid #fff}
+.pit.at{outline:3px solid #8fe3ff;outline-offset:-3px}
+.pit.cap{outline:3px solid var(--cap);outline-offset:-3px}
+.msg{min-height:3em;margin:12px 0 4px;text-align:center;font-weight:600;font-size:1.05rem}
+details{margin-top:14px;background:var(--panel);border-radius:14px;padding:10px 14px;font-size:.92rem;line-height:1.5}
+summary{font-weight:600;cursor:pointer}
+details ul{padding-left:18px;margin:8px 0 0}
+.pit i{background:radial-gradient(circle at 34% 28%,color-mix(in srgb,var(--seed) 35%,#fff),var(--seed) 52%,color-mix(in srgb,var(--seed) 45%,#000))}
+.stage{direction:ltr;perspective:1100px;perspective-origin:50% 35%;margin:6px 0 22px}
+.sw{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:.9rem;color:var(--muted)}
+.sw button{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:radial-gradient(circle at 34% 28%,#fffa,var(--c) 58%,#000a 130%);box-shadow:0 2px 4px rgba(0,0,0,.45)}
+.sw button[aria-pressed=true]{border-color:var(--ink)}
+.cell{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.cell .pit{width:100%}
+.num{font-weight:800;font-size:1.05rem;line-height:1;color:#f6eedb;text-shadow:0 1px 2px #000;min-height:1em}
+.hide-num .num{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.pit{transition:none}}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<main>
+  <h1>Awari</h1>
+  <p class="sub" id="sub"></p>
+  <div class="bar">
+    <select id="lang" aria-label="Langue"></select>
+    <select id="mode" aria-label="Mode de jeu">
+      <option value="ai">Solo contre l’ordinateur</option>
+      <option value="2p">À deux, même écran</option>
+    </select>
+    <select id="level" aria-label="Niveau"><option value="1">Facile</option><option value="2" selected>Moyen</option><option value="3">Fort</option><option value="4">Expert</option></select>
+    <button class="ctl" id="new">Nouvelle partie</button>
+    <button class="ctl" id="undo">Annuler</button>
+    <button class="ctl" id="snd">Son : activé</button>
+  </div>
+  <div class="sw" role="group" aria-label="Couleur des billes"><span id="bl"></span>
+    <button style="--c:#e6d3a3" data-c="#e6d3a3" aria-label="Ivoire"></button>
+    <button style="--c:#d8892b" data-c="#d8892b" aria-label="Ambre"></button>
+    <button style="--c:#b8322a" data-c="#b8322a" aria-label="Rouge"></button>
+    <button style="--c:#4f8f4a" data-c="#4f8f4a" aria-label="Vert"></button>
+    <button style="--c:#2f6fb5" data-c="#2f6fb5" aria-label="Bleu"></button>
+    <button style="--c:#7b4bb0" data-c="#7b4bb0" aria-label="Violet"></button>
+    <button style="--c:#6b6c76" data-c="#6b6c76" aria-label="Graphite"></button>
+  </div>
+  <div class="score" id="top"><span id="ntop"></span><b id="stop">0</b></div>
+  <div class="stage"><div class="board" id="board"></div></div>
+  <div class="score" id="bot"><span id="nbot"></span><b id="sbot">0</b></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div id="stats" style="text-align:center;color:var(--muted);font-size:.9rem"></div>
+  <details>
+    <summary id="rules"></summary>
+    <ul><li data-r="1"></li><li data-r="2"></li><li data-r="3"></li><li data-r="4"></li><li data-r="5"></li><li data-r="6"></li></ul>
+  </details>
+  <div id="ad" style="margin-top:16px;text-align:center"></div>
+  <p style="text-align:center;font-size:.85rem"><a href="privacy.html" style="color:inherit">Confidentialité</a></p>
+</main>
+<script>
+const D={
+fr:{nm:"Français",sub:"Capturez plus de 24 graines pour gagner.",mAi:"Solo contre l’ordinateur",m2p:"À deux, même écran",mRem:"À deux, à distance",l1:"Facile",l2:"Moyen",l3:"Fort",l4:"Expert",nw:"Nouvelle partie",rm:"Revanche",un:"Annuler",so:"Son : activé",sf:"Son : coupé",cr:"Créer une partie",jn:"Rejoindre",cd:"Code",ri0:"Créez une partie et envoyez le code à votre ami, ou saisissez le code reçu. Votre ami doit ouvrir cette page, être connecté et avoir un accès Contributeur.",ms:"Message",sd:"Envoyer",q1:"Bien joué !",q2:"Revanche ?",bl:"Billes :",col:"Couleur {0}",rules:"Règles",
+r1:"Touchez un de vos trous (rangée du bas) : ses graines sont semées une par une, dans le sens inverse des aiguilles d’une montre.",r2:"Avec 12 graines ou plus, le trou de départ est sauté.",r3:"Si la dernière graine tombe chez l’adversaire dans un trou qui contient alors 2 ou 3 graines, vous les capturez, ainsi que les trous précédents qui en contiennent 2 ou 3.",r4:"Une prise qui viderait toute la rangée adverse est annulée.",r5:"Si l’adversaire n’a plus de graines, vous devez lui en donner si possible.",r6:"Si aucun coup n’est possible, chacun garde les graines de sa rangée.",
+you:"Vous",cpu:"L’ordinateur",adv:"Votre adversaire",pl:"Joueur {0}",hm:"Trou de votre rangée",ho:"Trou de la rangée adverse",hs:"{0} graines",stats:"Contre l’ordinateur : {0} victoire(s), {1} défaite(s), {2} nul(s)",draw:"Match nul, {0} à {1}.",winU:"Vous gagnez {0} à {1} !",winO:"{0} gagne {1} à {2} !",tAi:"À vous de jouer : touchez un trou entouré de blanc.",think:"L’ordinateur réfléchit…",tMe:"À vous de jouer.",tOp:"Tour de votre adversaire…",tPl:"{0}, à vous de jouer.",cap:"+{0} graines capturées",err:"Action impossible : votre accès doit être au moins Contributeur.",rmW:"La revanche est possible une fois la partie terminée.",st0:"Créez une partie ou rejoignez-en une avec un code.",wait:"Code {0} : en attente de votre adversaire…",needAcc:"Le jeu à distance demande d’ouvrir cette page connecté à votre compte Claude.",slow:"Connexion lente… patientez ou réessayez.",share:"Partie {0} : donnez ce code à votre ami.",unk:"Code inconnu. Vérifiez-le et réessayez.",full:"Cette partie a déjà deux joueurs.",lost:"Connexion perdue avec la partie.",rd:"Impossible de lire la partie."},
+en:{nm:"English",sub:"Capture more than 24 seeds to win.",mAi:"Solo vs computer",m2p:"Two players, same screen",mRem:"Two players, online",l1:"Easy",l2:"Medium",l3:"Hard",l4:"Expert",nw:"New game",rm:"Rematch",un:"Undo",so:"Sound: on",sf:"Sound: off",cr:"Create a game",jn:"Join",cd:"Code",ri0:"Create a game and send the code to your friend, or enter the code you received. Your friend must open this page, be signed in and have Contributor access.",ms:"Message",sd:"Send",q1:"Well played!",q2:"Rematch?",bl:"Seeds:",col:"Color {0}",rules:"Rules",
+r1:"Tap one of your pits (bottom row): its seeds are sown one by one, counter-clockwise.",r2:"With 12 or more seeds, the starting pit is skipped.",r3:"If the last seed lands in an opponent pit that then holds 2 or 3 seeds, you capture them, along with the previous pits holding 2 or 3.",r4:"A capture that would empty the opponent’s whole row is cancelled.",r5:"If the opponent has no seeds, you must give them some if possible.",r6:"If no move is possible, each player keeps the seeds on their own row.",
+you:"You",cpu:"The computer",adv:"Your opponent",pl:"Player {0}",hm:"Pit in your row",ho:"Pit in the opponent’s row",hs:"{0} seeds",stats:"Vs computer: {0} win(s), {1} loss(es), {2} draw(s)",draw:"Draw, {0} to {1}.",winU:"You win {0} to {1}!",winO:"{0} wins {1} to {2}!",tAi:"Your turn: tap a pit outlined in white.",think:"The computer is thinking…",tMe:"Your turn.",tOp:"Your opponent’s turn…",tPl:"{0}, your turn.",cap:"+{0} seeds captured",err:"Not possible: your access must be at least Contributor.",rmW:"A rematch is possible once the game is over.",st0:"Create a game or join one with a code.",wait:"Code {0}: waiting for your opponent…",needAcc:"Online play requires opening this page signed in to your Claude account.",slow:"Slow connection… wait or try again.",share:"Game {0}: give this code to your friend.",unk:"Unknown code. Check it and try again.",full:"This game already has two players.",lost:"Connection to the game lost.",rd:"Unable to read the game."},
+es:{nm:"Español",sub:"Captura más de 24 semillas para ganar.",mAi:"Solo contra el ordenador",m2p:"Dos jugadores, misma pantalla",mRem:"Dos jugadores, en línea",l1:"Fácil",l2:"Medio",l3:"Difícil",l4:"Experto",nw:"Nueva partida",rm:"Revancha",un:"Deshacer",so:"Sonido: activado",sf:"Sonido: apagado",cr:"Crear partida",jn:"Unirse",cd:"Código",ri0:"Crea una partida y envía el código a tu amigo, o introduce el código recibido. Tu amigo debe abrir esta página, haber iniciado sesión y tener acceso de colaborador.",ms:"Mensaje",sd:"Enviar",q1:"¡Bien jugado!",q2:"¿Revancha?",bl:"Semillas:",col:"Color {0}",rules:"Reglas",
+r1:"Toca uno de tus hoyos (fila de abajo): sus semillas se reparten una a una, en sentido contrario a las agujas del reloj.",r2:"Con 12 semillas o más, se salta el hoyo de salida.",r3:"Si la última semilla cae en un hoyo rival que pasa a tener 2 o 3 semillas, las capturas, junto con los hoyos anteriores que tengan 2 o 3.",r4:"Una captura que dejaría vacía toda la fila rival se anula.",r5:"Si el rival no tiene semillas, debes darle alguna si es posible.",r6:"Si no hay jugada posible, cada uno se queda con las semillas de su fila.",
+you:"Tú",cpu:"El ordenador",adv:"Tu rival",pl:"Jugador {0}",hm:"Hoyo de tu fila",ho:"Hoyo de la fila rival",hs:"{0} semillas",stats:"Contra el ordenador: {0} victoria(s), {1} derrota(s), {2} empate(s)",draw:"Empate, {0} a {1}.",winU:"¡Ganas {0} a {1}!",winO:"¡{0} gana {1} a {2}!",tAi:"Tu turno: toca un hoyo con borde blanco.",think:"El ordenador está pensando…",tMe:"Tu turno.",tOp:"Turno de tu rival…",tPl:"{0}, tu turno.",cap:"+{0} semillas capturadas",err:"No es posible: tu acceso debe ser al menos de colaborador.",rmW:"La revancha es posible cuando termine la partida.",st0:"Crea una partida o únete a una con un código.",wait:"Código {0}: esperando a tu rival…",needAcc:"El juego en línea requiere abrir esta página con tu cuenta de Claude.",slow:"Conexión lenta… espera o inténtalo de nuevo.",share:"Partida {0}: da este código a tu amigo.",unk:"Código desconocido. Compruébalo e inténtalo de nuevo.",full:"Esta partida ya tiene dos jugadores.",lost:"Conexión con la partida perdida.",rd:"No se puede leer la partida."},
+pt:{nm:"Português",sub:"Capture mais de 24 sementes para ganhar.",mAi:"Solo contra o computador",m2p:"Dois jogadores, mesmo ecrã",mRem:"Dois jogadores, online",l1:"Fácil",l2:"Médio",l3:"Difícil",l4:"Especialista",nw:"Novo jogo",rm:"Desforra",un:"Desfazer",so:"Som: ligado",sf:"Som: desligado",cr:"Criar jogo",jn:"Entrar",cd:"Código",ri0:"Crie um jogo e envie o código ao seu amigo, ou introduza o código recebido. O seu amigo deve abrir esta página, ter sessão iniciada e acesso de colaborador.",ms:"Mensagem",sd:"Enviar",q1:"Bem jogado!",q2:"Desforra?",bl:"Sementes:",col:"Cor {0}",rules:"Regras",
+r1:"Toque num dos seus buracos (fila de baixo): as sementes são semeadas uma a uma, no sentido anti-horário.",r2:"Com 12 sementes ou mais, o buraco de partida é saltado.",r3:"Se a última semente cair num buraco adversário que passa a ter 2 ou 3 sementes, captura-as, bem como os buracos anteriores com 2 ou 3.",r4:"Uma captura que esvaziaria toda a fila adversária é anulada.",r5:"Se o adversário não tiver sementes, deve dar-lhe se possível.",r6:"Se não houver jogada possível, cada um fica com as sementes da sua fila.",
+you:"Você",cpu:"O computador",adv:"O seu adversário",pl:"Jogador {0}",hm:"Buraco da sua fila",ho:"Buraco da fila adversária",hs:"{0} sementes",stats:"Contra o computador: {0} vitória(s), {1} derrota(s), {2} empate(s)",draw:"Empate, {0} a {1}.",winU:"Você ganha {0} a {1}!",winO:"{0} ganha {1} a {2}!",tAi:"A sua vez: toque num buraco com contorno branco.",think:"O computador está a pensar…",tMe:"A sua vez.",tOp:"Vez do adversário…",tPl:"{0}, a sua vez.",cap:"+{0} sementes capturadas",err:"Não é possível: o seu acesso deve ser pelo menos de colaborador.",rmW:"A desforra é possível quando o jogo terminar.",st0:"Crie um jogo ou entre num com um código.",wait:"Código {0}: à espera do adversário…",needAcc:"O jogo online exige abrir esta página com a sua conta Claude.",slow:"Ligação lenta… aguarde ou tente de novo.",share:"Jogo {0}: dê este código ao seu amigo.",unk:"Código desconhecido. Verifique e tente de novo.",full:"Este jogo já tem dois jogadores.",lost:"Ligação ao jogo perdida.",rd:"Não foi possível ler o jogo."},
+ar:{nm:"العربية",sub:"التقط أكثر من 24 بذرة لتفوز.",mAi:"فردي ضد الحاسوب",m2p:"لاعبان على الشاشة نفسها",mRem:"لاعبان عبر الإنترنت",l1:"سهل",l2:"متوسط",l3:"صعب",l4:"خبير",nw:"لعبة جديدة",rm:"إعادة المباراة",un:"تراجع",so:"الصوت: مفعّل",sf:"الصوت: مكتوم",cr:"إنشاء لعبة",jn:"انضمام",cd:"الرمز",ri0:"أنشئ لعبة وأرسل الرمز إلى صديقك، أو أدخل الرمز الذي وصلك. يجب أن يفتح صديقك هذه الصفحة وأن يكون مسجّل الدخول ولديه صلاحية مساهم.",ms:"رسالة",sd:"إرسال",q1:"لعبة رائعة!",q2:"إعادة؟",bl:"البذور:",col:"اللون {0}",rules:"القواعد",
+r1:"المس إحدى حفرك (الصف السفلي): تُوزَّع بذورها واحدة واحدة عكس عقارب الساعة.",r2:"عند وجود 12 بذرة أو أكثر يُتخطّى حفرة البداية.",r3:"إذا وقعت آخر بذرة في حفرة الخصم وصارت تحوي 2 أو 3 بذور، تلتقطها مع الحفر السابقة التي تحوي 2 أو 3.",r4:"يُلغى أي التقاط يُفرغ صف الخصم بالكامل.",r5:"إذا لم يكن لدى الخصم بذور فعليك أن تعطيه بعضها إن أمكن.",r6:"إذا لم تكن هناك حركة ممكنة، يحتفظ كل لاعب ببذور صفه.",
+you:"أنت",cpu:"الحاسوب",adv:"خصمك",pl:"اللاعب {0}",hm:"حفرة في صفك",ho:"حفرة في صف الخصم",hs:"{0} بذور",stats:"ضد الحاسوب: {0} فوز، {1} خسارة، {2} تعادل",draw:"تعادل، {0} مقابل {1}.",winU:"فزت {0} مقابل {1}!",winO:"{0} يفوز {1} مقابل {2}!",tAi:"دورك: المس حفرة بإطار أبيض.",think:"الحاسوب يفكّر…",tMe:"دورك.",tOp:"دور خصمك…",tPl:"{0}، دورك.",cap:"+{0} بذور مُلتقطة",err:"غير ممكن: يجب أن تكون صلاحيتك مساهمًا على الأقل.",rmW:"الإعادة ممكنة بعد انتهاء اللعبة.",st0:"أنشئ لعبة أو انضم إلى لعبة برمز.",wait:"الرمز {0}: بانتظار خصمك…",needAcc:"اللعب عبر الإنترنت يتطلب فتح هذه الصفحة مسجّلًا الدخول بحساب Claude.",slow:"اتصال بطيء… انتظر أو حاول مجددًا.",share:"اللعبة {0}: أعطِ هذا الرمز لصديقك.",unk:"رمز غير معروف. تحقق وحاول مجددًا.",full:"هذه اللعبة فيها لاعبان بالفعل.",lost:"انقطع الاتصال باللعبة.",rd:"تعذّرت قراءة اللعبة."},
+sw:{nm:"Kiswahili",sub:"Kamata mbegu zaidi ya 24 ili ushinde.",mAi:"Peke yako dhidi ya kompyuta",m2p:"Wachezaji wawili, skrini moja",mRem:"Wachezaji wawili, mtandaoni",l1:"Rahisi",l2:"Wastani",l3:"Ngumu",l4:"Mtaalamu",nw:"Mchezo mpya",rm:"Marudiano",un:"Tendua",so:"Sauti: imewashwa",sf:"Sauti: imezimwa",cr:"Unda mchezo",jn:"Jiunge",cd:"Msimbo",ri0:"Unda mchezo na utume msimbo kwa rafiki yako, au weka msimbo uliopokea. Rafiki yako lazima afungue ukurasa huu, awe ameingia na awe na ufikiaji wa Mchangiaji.",ms:"Ujumbe",sd:"Tuma",q1:"Umecheza vizuri!",q2:"Marudiano?",bl:"Mbegu:",col:"Rangi {0}",rules:"Sheria",
+r1:"Gusa shimo lako (safu ya chini): mbegu zake hupandwa moja moja, kinyume cha saa.",r2:"Kukiwa na mbegu 12 au zaidi, shimo la kuanzia linarukwa.",r3:"Mbegu ya mwisho ikiangukia shimo la mpinzani lenye mbegu 2 au 3 baadaye, unazikamata pamoja na mashimo ya awali yenye 2 au 3.",r4:"Kukamata kunakoondoa mbegu zote za safu ya mpinzani kunafutwa.",r5:"Mpinzani akikosa mbegu, lazima umpe ukiweza.",r6:"Hakuna hatua inayowezekana, kila mmoja anabaki na mbegu za safu yake.",
+you:"Wewe",cpu:"Kompyuta",adv:"Mpinzani wako",pl:"Mchezaji {0}",hm:"Shimo la safu yako",ho:"Shimo la safu ya mpinzani",hs:"mbegu {0}",stats:"Dhidi ya kompyuta: ushindi {0}, kushindwa {1}, sare {2}",draw:"Sare, {0} kwa {1}.",winU:"Umeshinda {0} kwa {1}!",winO:"{0} ameshinda {1} kwa {2}!",tAi:"Zamu yako: gusa shimo lenye mstari mweupe.",think:"Kompyuta inafikiri…",tMe:"Zamu yako.",tOp:"Zamu ya mpinzani wako…",tPl:"{0}, zamu yako.",cap:"+mbegu {0} zimekamatwa",err:"Haiwezekani: ufikiaji wako lazima uwe Mchangiaji angalau.",rmW:"Marudiano yanawezekana mchezo ukiisha.",st0:"Unda mchezo au jiunge na mmoja kwa msimbo.",wait:"Msimbo {0}: unamsubiri mpinzani wako…",needAcc:"Mchezo wa mtandaoni unahitaji kufungua ukurasa huu ukiwa umeingia kwenye akaunti yako ya Claude.",slow:"Mtandao polepole… subiri au jaribu tena.",share:"Mchezo {0}: mpe rafiki yako msimbo huu.",unk:"Msimbo haujulikani. Angalia na ujaribu tena.",full:"Mchezo huu una wachezaji wawili tayari.",lost:"Muunganisho na mchezo umepotea.",rd:"Imeshindikana kusoma mchezo."},
+de:{nm:"Deutsch",sub:"Erobere mehr als 24 Samen, um zu gewinnen.",mAi:"Solo gegen den Computer",m2p:"Zu zweit, gleicher Bildschirm",mRem:"Zu zweit, online",l1:"Leicht",l2:"Mittel",l3:"Schwer",l4:"Experte",nw:"Neues Spiel",rm:"Revanche",un:"Rückgängig",so:"Ton: an",sf:"Ton: aus",cr:"Spiel erstellen",jn:"Beitreten",cd:"Code",ri0:"Erstelle ein Spiel und schicke den Code an deinen Freund, oder gib den erhaltenen Code ein. Dein Freund muss diese Seite öffnen, angemeldet sein und Mitwirkenden-Zugriff haben.",ms:"Nachricht",sd:"Senden",q1:"Gut gespielt!",q2:"Revanche?",bl:"Samen:",col:"Farbe {0}",rules:"Regeln",
+r1:"Tippe auf eine deiner Mulden (untere Reihe): Die Samen werden einzeln gegen den Uhrzeigersinn verteilt.",r2:"Bei 12 oder mehr Samen wird die Startmulde übersprungen.",r3:"Landet der letzte Same in einer gegnerischen Mulde, die dann 2 oder 3 Samen enthält, erobert man sie samt den vorherigen Mulden mit 2 oder 3 Samen.",r4:"Ein Fang, der die ganze gegnerische Reihe leeren würde, wird aufgehoben.",r5:"Hat der Gegner keine Samen, musst du ihm nach Möglichkeit welche geben.",r6:"Ist kein Zug möglich, behält jeder die Samen seiner Reihe.",
+you:"Du",cpu:"Der Computer",adv:"Dein Gegner",pl:"Spieler {0}",hm:"Mulde deiner Reihe",ho:"Mulde der gegnerischen Reihe",hs:"{0} Samen",stats:"Gegen den Computer: {0} Sieg(e), {1} Niederlage(n), {2} Unentschieden",draw:"Unentschieden, {0} zu {1}.",winU:"Du gewinnst {0} zu {1}!",winO:"{0} gewinnt {1} zu {2}!",tAi:"Du bist dran: tippe auf eine weiß umrandete Mulde.",think:"Der Computer denkt nach…",tMe:"Du bist dran.",tOp:"Dein Gegner ist dran…",tPl:"{0}, du bist dran.",cap:"+{0} Samen erobert",err:"Nicht möglich: Dein Zugriff muss mindestens Mitwirkender sein.",rmW:"Eine Revanche ist nach Spielende möglich.",st0:"Erstelle ein Spiel oder tritt mit einem Code bei.",wait:"Code {0}: Warte auf deinen Gegner…",needAcc:"Online-Spiel erfordert, diese Seite mit deinem Claude-Konto angemeldet zu öffnen.",slow:"Langsame Verbindung… warte oder versuche es erneut.",share:"Spiel {0}: Gib diesen Code deinem Freund.",unk:"Unbekannter Code. Prüfe ihn und versuche es erneut.",full:"Dieses Spiel hat bereits zwei Spieler.",lost:"Verbindung zum Spiel verloren.",rd:"Spiel kann nicht gelesen werden."},
+zh:{nm:"中文",sub:"夺取超过24颗种子即可获胜。",mAi:"单人对战电脑",m2p:"双人，同一屏幕",mRem:"双人，在线",l1:"简单",l2:"中等",l3:"困难",l4:"专家",nw:"新游戏",rm:"再战",un:"撤销",so:"声音：开",sf:"声音：关",cr:"创建游戏",jn:"加入",cd:"代码",ri0:"创建游戏并把代码发给朋友，或输入收到的代码。朋友需要打开此页面、已登录并具有贡献者权限。",ms:"消息",sd:"发送",q1:"打得好！",q2:"再来一局？",bl:"种子：",col:"颜色{0}",rules:"规则",
+r1:"点击你的一个坑（下排）：其中的种子按逆时针方向逐颗播撒。",r2:"有12颗或更多种子时，跳过起始坑。",r3:"如果最后一颗种子落在对手的坑里，且该坑此时有2或3颗种子，你可夺取它们，以及前面连续有2或3颗种子的坑。",r4:"若夺取会清空对手整排，则该夺取无效。",r5:"如果对手没有种子，你必须尽可能给他种子。",r6:"如果无法走子，各自保留自己一排的种子。",
+you:"你",cpu:"电脑",adv:"你的对手",pl:"玩家{0}",hm:"你这排的坑",ho:"对手那排的坑",hs:"{0}颗种子",stats:"对战电脑：{0}胜，{1}负，{2}平",draw:"平局，{0}比{1}。",winU:"你以{0}比{1}获胜！",winO:"{0}以{1}比{2}获胜！",tAi:"轮到你：点击白色边框的坑。",think:"电脑正在思考…",tMe:"轮到你了。",tOp:"轮到对手…",tPl:"{0}，轮到你了。",cap:"+{0}颗种子被夺取",err:"无法操作：你的权限至少需要是贡献者。",rmW:"游戏结束后才能再战。",st0:"创建游戏，或用代码加入游戏。",wait:"代码{0}：正在等待对手…",needAcc:"在线对战需要登录你的Claude账号后打开此页面。",slow:"连接较慢…请等待或重试。",share:"游戏{0}：把此代码告诉朋友。",unk:"代码未知。请检查后重试。",full:"这局游戏已有两名玩家。",lost:"与游戏的连接已断开。",rd:"无法读取游戏。"},
+hi:{nm:"हिन्दी",sub:"जीतने के लिए 24 से ज़्यादा बीज पकड़ें।",mAi:"अकेले, कंप्यूटर के खिलाफ़",m2p:"दो खिलाड़ी, एक ही स्क्रीन",mRem:"दो खिलाड़ी, ऑनलाइन",l1:"आसान",l2:"मध्यम",l3:"कठिन",l4:"विशेषज्ञ",nw:"नया खेल",rm:"दोबारा खेलें",un:"पूर्ववत करें",so:"आवाज़: चालू",sf:"आवाज़: बंद",cr:"खेल बनाएँ",jn:"शामिल हों",cd:"कोड",ri0:"खेल बनाएँ और कोड अपने दोस्त को भेजें, या मिला हुआ कोड डालें। आपके दोस्त को यह पेज खोलना होगा, लॉग इन होना होगा और योगदानकर्ता की पहुँच होनी चाहिए।",ms:"संदेश",sd:"भेजें",q1:"बढ़िया खेले!",q2:"दोबारा?",bl:"बीज:",col:"रंग {0}",rules:"नियम",
+r1:"अपने किसी गड्ढे (नीचे की पंक्ति) को छुएँ: उसके बीज वामावर्त दिशा में एक-एक करके बाँटे जाते हैं।",r2:"12 या ज़्यादा बीज होने पर शुरुआती गड्ढा छोड़ दिया जाता है।",r3:"अगर आखिरी बीज विरोधी के ऐसे गड्ढे में गिरे जिसमें अब 2 या 3 बीज हों, तो आप उन्हें और उससे पहले के 2 या 3 बीज वाले गड्ढों को पकड़ लेते हैं।",r4:"जो पकड़ विरोधी की पूरी पंक्ति खाली कर दे, वह रद्द हो जाती है।",r5:"अगर विरोधी के पास बीज नहीं हैं, तो संभव हो तो आपको उसे बीज देने होंगे।",r6:"अगर कोई चाल संभव न हो, तो हर खिलाड़ी अपनी पंक्ति के बीज रख लेता है।",
+you:"आप",cpu:"कंप्यूटर",adv:"आपका विरोधी",pl:"खिलाड़ी {0}",hm:"आपकी पंक्ति का गड्ढा",ho:"विरोधी की पंक्ति का गड्ढा",hs:"{0} बीज",stats:"कंप्यूटर के खिलाफ़: {0} जीत, {1} हार, {2} ड्रॉ",draw:"ड्रॉ, {0} - {1}।",winU:"आप {0} - {1} से जीते!",winO:"{0} {1} - {2} से जीता!",tAi:"आपकी बारी: सफ़ेद किनारे वाले गड्ढे को छुएँ।",think:"कंप्यूटर सोच रहा है…",tMe:"आपकी बारी।",tOp:"विरोधी की बारी…",tPl:"{0}, आपकी बारी।",cap:"+{0} बीज पकड़े गए",err:"संभव नहीं: आपकी पहुँच कम से कम योगदानकर्ता की होनी चाहिए।",rmW:"खेल खत्म होने पर दोबारा खेला जा सकता है।",st0:"खेल बनाएँ या कोड से किसी खेल में शामिल हों।",wait:"कोड {0}: विरोधी का इंतज़ार…",needAcc:"ऑनलाइन खेलने के लिए अपने Claude खाते से लॉग इन करके यह पेज खोलें।",slow:"धीमा कनेक्शन… प्रतीक्षा करें या दोबारा कोशिश करें।",share:"खेल {0}: यह कोड अपने दोस्त को दें।",unk:"कोड अज्ञात है। जाँचकर फिर कोशिश करें।",full:"इस खेल में पहले से दो खिलाड़ी हैं।",lost:"खेल से कनेक्शन टूट गया।",rd:"खेल पढ़ा नहीं जा सका।"},
+ha:{nm:"Hausa (beta)",sub:"Kama fiye da iri 24 don ka yi nasara.",mAi:"Kai kaɗai da kwamfuta",m2p:"Mutum biyu, allo ɗaya",mRem:"Mutum biyu, ta intanet",l1:"Mai sauƙi",l2:"Matsakaici",l3:"Mai wahala",l4:"Ƙwararre",nw:"Sabon wasa",rm:"Sake wasa",un:"Soke",so:"Sauti: a kunne",sf:"Sauti: a kashe",cr:"Ƙirƙiri wasa",jn:"Shiga",cd:"Lamba",ri0:"Ƙirƙiri wasa ka aika lambar ga abokinka, ko ka shigar da lambar da aka aiko maka. Abokinka dole ya buɗe wannan shafi, ya shiga asusunsa, kuma ya kasance da damar Mai Ba da Gudummawa.",ms:"Saƙo",sd:"Aika",q1:"Ka yi kyau!",q2:"Sake wasa?",bl:"Iri:",col:"Launi {0}",rules:"Ƙa’idoji",
+r1:"Taɓa ɗaya daga cikin ramukanka (layin ƙasa): ana shuka irinsa ɗaya bayan ɗaya, a kishiyar agogo.",r2:"Idan akwai iri 12 ko fiye, ana tsallake ramin farawa.",r3:"Idan irin ƙarshe ya faɗi a ramin abokin hamayya wanda ya zama yana da iri 2 ko 3, ka kama su tare da ramukan da suka gabata masu iri 2 ko 3.",r4:"Kamawar da za ta wofintar da dukan layin abokin hamayya an soke ta.",r5:"Idan abokin hamayya ba shi da iri, dole ka ba shi idan zai yiwu.",r6:"Idan babu motsi da zai yiwu, kowa yana riƙe irin layinsa.",
+you:"Kai",cpu:"Kwamfuta",adv:"Abokin hamayyarka",pl:"ɗan wasa {0}",hm:"Ramin layinka",ho:"Ramin layin abokin hamayya",hs:"iri {0}",stats:"Da kwamfuta: nasara {0}, rashin nasara {1}, canjaras {2}",draw:"Canjaras, {0} da {1}.",winU:"Ka yi nasara {0} da {1}!",winO:"{0} ya yi nasara {1} da {2}!",tAi:"Lokacinka: taɓa rami mai farin layi.",think:"Kwamfuta tana tunani…",tMe:"Lokacinka.",tOp:"Lokacin abokin hamayyarka…",tPl:"{0}, lokacinka.",cap:"+iri {0} an kama",err:"Ba zai yiwu ba: damarka dole ta zama aƙalla Mai Ba da Gudummawa.",rmW:"Ana iya sake wasa idan wasan ya ƙare.",st0:"Ƙirƙiri wasa ko ka shiga ɗaya da lamba.",wait:"Lamba {0}: ana jiran abokin hamayyarka…",needAcc:"Wasa ta intanet yana buƙatar buɗe wannan shafi da asusun Claude naka.",slow:"Haɗin yana jinkiri… jira ko sake gwadawa.",share:"Wasa {0}: ba abokinka wannan lambar.",unk:"Lamba ba a sani ba. Duba ka sake gwadawa.",full:"Wannan wasa yana da ’yan wasa biyu tuni.",lost:"Haɗi da wasan ya ɓace.",rd:"Ba a iya karanta wasan ba."}
+};
+let LANG=(()=>{let l=null;try{l=localStorage.getItem("awari-lang");}catch(e){}
+  if(!l||!D[l])l=((navigator.language||"fr").slice(0,2));
+  return D[l]?l:"fr";})();
+function T(k,...a){return(D[LANG][k]??D.fr[k]??k).replace(/\{(\d)\}/g,(_,i)=>a[i]);}
+function applyLang(){
+  const set=(s,v,attr)=>{const e=document.querySelector(s);if(!e)return;attr?e.setAttribute(attr,v):e.textContent=v;};
+  document.documentElement.lang=LANG;
+  document.documentElement.dir=LANG==="ar"?"rtl":"ltr";
+  set("#sub",T("sub"));set("#rules",T("rules"));set("#bl",T("bl"));
+  [["ai","mAi"],["2p","m2p"],["remote","mRem"]].forEach(([v,k])=>set('#mode option[value="'+v+'"]',T(k)));
+  [1,2,3,4].forEach(n=>set('#level option[value="'+n+'"]',T("l"+n)));
+  set("#undo",T("un"));set("#create",T("cr"));set("#join",T("jn"));set("#csend",T("sd"));
+  set("#code",T("cd"),"placeholder");set("#ctext",T("ms"),"placeholder");
+  document.querySelectorAll("[data-r]").forEach(li=>li.textContent=T("r"+li.dataset.r));
+  document.querySelectorAll(".sw button").forEach((b,i)=>b.setAttribute("aria-label",T("col",i+1)));
+  const q=document.querySelectorAll("#quick button");
+  if(q[1]){q[1].textContent=q[1].dataset.q=T("q1");q[2].textContent=q[2].dataset.q=T("q2");}
+  set("#snd",T(sound?"so":"sf"));
+  if(!R.ref)set("#rinfo",T("ri0"));
+  const sel=$("#lang");if(sel&&!sel.options.length)Object.keys(D).forEach(k=>sel.add(new Option(D[k].nm,k)));
+  if(sel)sel.value=LANG;
+}
+
+const $=s=>document.querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const side=(j,p)=>p===0?j>=6:j<6;
+let st,busy,over,me=0;
+let hist=[],sound=true,ac=null,recorded=false;
+function blip(f=660,d=.06){
+  if(!sound)return;
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(ac.destination);
+    o.start();o.stop(ac.currentTime+d);}catch(e){}
+}
+function undo(){
+  if(mode()==="remote"||busy||!hist.length)return;
+  const n=mode()==="ai"?2:1;
+  let prev=null;
+  for(let k=0;k<n&&hist.length;k++)prev=hist.pop();
+  if(!prev)return;
+  st=prev;over=false;render(st.b);status();
+}
+function loadStats(){try{return JSON.parse(localStorage.getItem("awari-stats"))||{w:0,l:0,d:0};}catch(e){return{w:0,l:0,d:0};}}
+function saveStats(s){try{localStorage.setItem("awari-stats",JSON.stringify(s));}catch(e){}}
+function showStats(){const s=loadStats();$("#stats").textContent=T("stats",s.w,s.l,s.d);}
+function record(){
+  if(mode()!=="ai")return;
+  const f=finalScore(st),s=loadStats();
+  if(f[0]>f[1])s.w++;else if(f[1]>f[0])s.l++;else s.d++;
+  saveStats(s);showStats();
+}
+let R={db:null,uid:null,ref:null,unsub:null,code:null,guest:null,host:null,ready:false};
+const mode=()=>$("#mode").value;
+
+function apply(s,i){
+  const b=s.b.slice(),sc=s.s.slice(),p=s.t;
+  let n=b[i],j=i,seq=[],cap=[];
+  b[i]=0;
+  while(n>0){j=(j+1)%12;if(j===i)continue;b[j]++;n--;seq.push(j);}
+  const fed=seq.some(k=>side(k,p));
+  if(side(j,p)&&(b[j]===2||b[j]===3)){
+    let k=j,tot=0,list=[];
+    while(k>=0&&k<12&&side(k,p)&&(b[k]===2||b[k]===3)){list.push(k);tot+=b[k];k--;}
+    let rest=0;for(let q=0;q<12;q++)if(side(q,p))rest+=b[q];
+    if(rest>tot){cap=list;list.forEach(q=>b[q]=0);sc[p]+=tot;}
+  }
+  return{b,s:sc,t:1-p,n:s.n+1,seq,cap,fed};
+}
+function legal(s){
+  const p=s.t,mine=p===0?[0,1,2,3,4,5]:[6,7,8,9,10,11];
+  let m=mine.filter(i=>s.b[i]>0);
+  const oppEmpty=!s.b.some((v,q)=>side(q,p)&&v>0);
+  if(oppEmpty)m=m.filter(i=>apply(s,i).fed);
+  return m;
+}
+function fin(s){return s.s[0]>24||s.s[1]>24||s.n>=300||legal(s).length===0;}
+function finalScore(s){
+  const f=s.s.slice();
+  if(f[0]<=24&&f[1]<=24)s.b.forEach((v,q)=>{f[q<6?0:1]+=v;});
+  return f;
+}
+function nega(s,d,a,b){
+  const p=s.t;
+  if(fin(s)){const f=finalScore(s);return(f[p]-f[1-p])*100;}
+  if(d===0)return s.s[p]-s.s[1-p];
+  let best=-1e9;
+  for(const m of legal(s)){
+    const v=-nega(apply(s,m),d-1,-b,-a);
+    if(v>best)best=v;if(v>a)a=v;if(a>=b)break;
+  }
+  return best;
+}
+function aiMove(){
+  const lv=+$("#level").value,ms=legal(st);
+  if(lv===1&&Math.random()<.35)return ms[Math.floor(Math.random()*ms.length)];
+  const depth=[0,1,4,7,8][lv];
+  let best=-1e9,pick=[];
+  for(const m of ms){
+    const v=-nega(apply(st,m),depth-1,-1e9,1e9);
+    if(v>best){best=v;pick=[m];}else if(v===best)pick.push(m);
+  }
+  return pick[Math.floor(Math.random()*pick.length)];
+}
+
+function canClick(i){
+  if(busy||over)return false;
+  const m=mode();
+  if(m==="ai"&&st.t!==0)return false;
+  if(m==="remote"&&(!R.ready||!R.guest||st.t!==me))return false;
+  return legal(st).includes(i);
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function hideNum(){return mode()==="ai"&&$("#level").value==="4";}
+function render(view,o={}){
+  document.body.classList.toggle("hide-num",hideNum());
+  const order=me===0?[11,10,9,8,7,6,0,1,2,3,4,5]:[5,4,3,2,1,0,6,7,8,9,10,11];
+  $("#board").innerHTML=order.map((i,k)=>{
+    const c=view[i],mine=k>=6;
+    const cls=["pit",mine?"me":"op"];
+    if(canClick(i))cls.push("ok");
+    if(o.at===i||o.from===i)cls.push("at");
+    if(o.cap&&o.cap.includes(i))cls.push("cap");
+    const num=`<span class="num">${c}</span>`;return `<div class="cell">${k<6?num:""}<button class="${cls.join(" ")}" data-i="${i}" aria-label="${esc((mine?T("hm"):T("ho"))+(hideNum()?"":", "+T("hs",c)))}" ${cls.includes("ok")?"":"disabled"}>${"<i></i>".repeat(Math.min(c,24))}</button>${k<6?"":num}</div>`;
+  }).join("");
+  const sc=o.s||st.s;
+  $("#sbot").textContent=sc[me];$("#stop").textContent=sc[1-me];
+}
+function nameOf(seat){
+  const m=mode();
+  if(m==="ai")return seat===0?T("you"):T("cpu");
+  if(m==="remote")return seat===me?T("you"):T("adv");
+  return T("pl",seat+1);
+}
+function status(){
+  $("#nbot").textContent=nameOf(me);$("#ntop").textContent=nameOf(1-me);
+  const m=mode();
+  $("#bot").classList.toggle("on",!over&&st.t===me);
+  $("#top").classList.toggle("on",!over&&st.t!==me);
+  const msg=$("#msg");
+  if(m==="remote"&&!R.ready){msg.textContent=T("st0");return;}
+  if(m==="remote"&&!R.guest){msg.textContent=T("wait",R.code);return;}
+  if(over){
+    const f=finalScore(st);
+    const w=f[0]>f[1]?0:1,hi=Math.max(f[0],f[1]),lo=Math.min(f[0],f[1]);const t=f[0]===f[1]?T("draw",f[0],f[1]):(nameOf(w)===T("you")?T("winU",hi,lo):T("winO",nameOf(w),hi,lo));
+    msg.textContent=t;
+    $("#sbot").textContent=f[me];$("#stop").textContent=f[1-me];
+    return;
+  }
+  if(m==="ai")msg.textContent=st.t===0?T("tAi"):T("think");
+  else if(m==="remote")msg.textContent=st.t===me?T("tMe"):T("tOp");
+  else msg.textContent=T("tPl",T("pl",st.t+1));
+}
+async function animate(i,ns){
+  busy=true;
+  const view=st.b.slice();
+  view[i]=0;render(view,{from:i});
+  for(const j of ns.seq){await sleep(230);view[j]++;render(view,{at:j});blip();}
+  if(ns.cap.length){
+    const got=ns.cap.reduce((a,q)=>a+view[q],0);
+    render(view,{cap:ns.cap});blip(330,.2);
+    $("#msg").textContent=T("cap",got);
+    await sleep(900);
+  }
+}
+function commit(ns){
+  st={b:ns.b,s:ns.s,t:ns.t,n:ns.n};busy=false;over=fin(st);
+  if(over&&!recorded){recorded=true;record();}
+  render(st.b);status();
+}
+async function play(i){
+  if(mode()!=="remote")hist.push(JSON.parse(JSON.stringify(st)));
+  const ns=apply(st,i);
+  await animate(i,ns);
+  commit(ns);
+  if(mode()==="remote"&&R.ref){
+    try{await R.ref.update({b:st.b,s:st.s,t:st.t,n:st.n,last:i});}
+    catch(e){$("#msg").textContent=T("err");}
+  }
+  maybeAI();
+}
+async function maybeAI(){
+  if(mode()==="ai"&&st.t===1&&!over){
+    const cur=st;await sleep(500);
+    if(cur!==st||busy)return;
+    play(aiMove());
+  }
+}
+function fresh(){return{b:Array(12).fill(4),s:[0,0],t:0,n:0};}
+async function newGame(){
+  if(mode()==="remote"){
+    if(R.ref&&me===0){
+      try{await R.ref.update({...fresh(),last:null});}catch(e){}
+    }
+    st=fresh();busy=false;over=false;render(st.b);status();return;
+  }
+  st=fresh();me=0;busy=false;over=false;hist=[];recorded=false;
+  render(st.b);status();
+}
+
+/* ---- À distance ---- */
+function leave(){
+  if(R.unsub){try{R.unsub();}catch(e){}}
+  R.unsub=null;R.ref=null;R.code=null;R.guest=null;R.host=null;R.ready=false;
+}
+async function ensureDb(){
+  if(R.db&&R.uid)return true;
+  try{
+    if(!window.claude)throw 0;
+    R.db=await claude.use("db");
+    const u=await claude.use("user");
+    R.uid=u?await u.id():null;
+  }catch(e){R.db=null;}
+  if(!R.db||!R.uid){$("#rinfo").textContent=T("needAcc");return false;}
+  return true;
+}
+function listen(code){
+  R.code=code;R.ref=R.db.doc("awari/"+code);
+  let timer=setTimeout(()=>{if(!R.ready)$("#rinfo").textContent=T("slow");},10000);
+  R.unsub=R.ref.onSnapshot(async snap=>{
+    clearTimeout(timer);
+    if(!snap.exists)return;
+    const d=snap.data();
+    R.host=d.host;R.guest=d.guest||null;R.ready=true;
+    $("#rinfo").textContent=T("share",code);
+    if(d.n>st.n&&!busy){
+      if(d.n===st.n+1&&d.last!=null&&d.t!==me){
+        const ns=apply(st,d.last);
+        await animate(d.last,ns);
+        commit({b:d.b,s:d.s,t:d.t,n:d.n});
+      }else{
+        commit({b:d.b,s:d.s,t:d.t,n:d.n});
+      }
+    }else if(d.n<st.n&&d.n===0){
+      commit({b:d.b,s:d.s,t:d.t,n:0});
+    }else{render(st.b);status();}
+  },()=>{$("#rinfo").textContent=T("lost");});
+}
+async function createGame(){
+  if(!await ensureDb())return;
+  leave();
+  const A="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let code,ok=false;
+  for(let k=0;k<4&&!ok;k++){
+    code="";for(let q=0;q<5;q++)code+=A[Math.floor(Math.random()*A.length)];
+    try{const s=await R.db.doc("awari/"+code).get();ok=!s.exists;}catch(e){break;}
+  }
+  try{
+    await R.db.doc("awari/"+code).set({...fresh(),last:null,host:R.uid,guest:null});
+  }catch(e){$("#rinfo").textContent=T("err");return;}
+  me=0;st=fresh();busy=false;over=false;
+  listen(code);render(st.b);status();
+}
+async function joinGame(){
+  const code=$("#code").value.trim().toUpperCase();
+  if(!code||!await ensureDb())return;
+  let snap;
+  try{snap=await R.db.doc("awari/"+code).get();}catch(e){$("#rinfo").textContent=T("rd");return;}
+  if(!snap.exists){$("#rinfo").textContent=T("unk");return;}
+  const d=snap.data();
+  leave();
+  if(d.host===R.uid)me=0;
+  else if(!d.guest||d.guest===R.uid){
+    me=1;
+    if(!d.guest){
+      try{await R.db.doc("awari/"+code).update({guest:R.uid});}
+      catch(e){$("#rinfo").textContent=T("err");return;}
+    }
+  }else{$("#rinfo").textContent=T("full");return;}
+  st={b:d.b,s:d.s,t:d.t,n:d.n};busy=false;over=fin(st);
+  listen(code);render(st.b);status();
+}
+
+$("#board").addEventListener("click",e=>{
+  const b=e.target.closest(".pit");
+  if(!b)return;
+  const i=+b.dataset.i;
+  if(canClick(i))play(i);
+});
+$("#new").onclick=newGame;
+$("#create").onclick=createGame;
+$("#join").onclick=joinGame;
+$("#mode").onchange=()=>{
+  leave();
+  
+  $("#level").style.display=mode()==="ai"?"":"none";
+  me=0;st=fresh();busy=false;over=false;hist=[];recorded=false;render(st.b);status();
+};
+$("#undo").onclick=undo;
+$("#snd").onclick=()=>{sound=!sound;$("#snd").textContent=T(sound?"so":"sf");};
+document.addEventListener("keydown",e=>{
+  if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
+  const ok=[...document.querySelectorAll(".pit.ok")];
+  if(!ok.length)return;
+  const k=ok.indexOf(document.activeElement);
+  const nx=e.key==="ArrowRight"?(k+1)%ok.length:(k-1+ok.length)%ok.length;
+  ok[k<0?0:nx].focus();e.preventDefault();
+});
+showStats();
+$("#mode").onchange();
+
+function setSeed(c){
+  document.documentElement.style.setProperty("--seed",c);
+  document.querySelectorAll(".sw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  try{localStorage.setItem("awari-seed",c);}catch(e){}
+}
+document.querySelectorAll(".sw button").forEach(b=>b.onclick=()=>setSeed(b.dataset.c));
+(function(){let c="#e6d3a3";try{c=localStorage.getItem("awari-seed")||c;}catch(e){}setSeed(c);})();
+$("#level").onchange=()=>{if(!busy)render(st.b);};
+
+$("#lang").onchange=()=>{LANG=$("#lang").value;try{localStorage.setItem("awari-lang",LANG);}catch(e){}applyLang();render(st.b);status();showStats();};
+applyLang();render(st.b);status();showStats();
+
+/* Publicité (désactivée par défaut) : renseignez vos identifiants AdSense puis hébergez la page sur votre site. */
+const ADS={enabled:false,client:"ca-pub-XXXXXXXXXXXXXXXX",slot:"0000000000"};
+if(ADS.enabled&&/^https?:/.test(location.protocol)){
+  const s=document.createElement("script");s.async=true;s.crossOrigin="anonymous";
+  s.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="+ADS.client;
+  document.head.appendChild(s);
+  const i=document.createElement("ins");i.className="adsbygoogle";i.style.display="block";
+  i.dataset.adClient=ADS.client;i.dataset.adSlot=ADS.slot;i.dataset.adFormat="auto";i.dataset.fullWidthResponsive="true";
+  document.getElementById("ad").appendChild(i);
+  s.onload=()=>{try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}};
+}
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body>
+</html>
