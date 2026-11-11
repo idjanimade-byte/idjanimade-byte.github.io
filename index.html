@@ -8,6 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Awari">
 <meta name="theme-color" content="#47281a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
 <style>
 :root{
@@ -65,11 +68,13 @@ details ul{padding-left:18px;margin:8px 0 0}
 .cell .pit{width:100%}
 .num{font-weight:800;font-size:1.05rem;line-height:1;color:#f6eedb;text-shadow:0 1px 2px #000;min-height:1em}
 .hide-num .num{visibility:hidden}
+#clog{max-height:9em;overflow:auto;font-size:.88rem;display:flex;flex-direction:column}
+.m{max-width:82%;padding:5px 11px;border-radius:15px;margin:3px 0;width:fit-content;word-break:break-word}
+.m.me{margin-left:auto;background:#d8892b;color:#1a0e06;border-bottom-right-radius:4px}
+.m.op{background:var(--bg);border:1px solid var(--muted);border-bottom-left-radius:4px}
+#quick button{padding:5px 10px;font-size:.82rem}
 @media (prefers-reduced-motion:reduce){.pit{transition:none}}
 </style>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 <main>
@@ -80,11 +85,22 @@ details ul{padding-left:18px;margin:8px 0 0}
     <select id="mode" aria-label="Mode de jeu">
       <option value="ai">Solo contre l’ordinateur</option>
       <option value="2p">À deux, même écran</option>
+      <!--remote--><option value="remote" hidden disabled>À deux, à distance</option>
     </select>
     <select id="level" aria-label="Niveau"><option value="1">Facile</option><option value="2" selected>Moyen</option><option value="3">Fort</option><option value="4">Expert</option></select>
     <button class="ctl" id="new">Nouvelle partie</button>
     <button class="ctl" id="undo">Annuler</button>
     <button class="ctl" id="snd">Son : activé</button>
+  </div>
+  <div class="bar" id="ol" style="display:none"><input id="olang" maxlength="30" style="text-transform:none;width:12em"><button class="ctl" id="olgo"></button></div>
+  <div id="remote">
+    <div class="bar" style="margin:0">
+      <input id="pseudo" maxlength="16" style="text-transform:none;width:8em" aria-label="Pseudo"><button class="ctl" id="create">Créer une partie</button>
+      <input id="code" maxlength="5" placeholder="Code" aria-label="Code de la partie" autocapitalize="characters">
+      <button class="ctl" id="join">Rejoindre</button>
+    </div>
+    <p id="rinfo">Créez une partie et envoyez le code à votre ami, ou saisissez le code reçu. Votre ami doit ouvrir cette page, être connecté et avoir un accès Contributeur.</p>
+    <div id="chat" style="display:none;margin-top:8px"><button class="ctl" id="trb" style="margin-bottom:6px"></button><div id="clog" aria-live="polite"></div><div class="bar" id="quick" style="margin:6px 0 0"><button class="ctl" data-q="👍">👍</button><button class="ctl" data-q="Bien joué !">Bien joué !</button><button class="ctl" data-q="Revanche ?">Revanche ?</button><button class="ctl" data-q="😅">😅</button></div><div class="bar" style="margin:6px 0 0"><input id="ctext" maxlength="120" style="flex:1;width:auto;text-transform:none" placeholder="Message" aria-label="Message"><button class="ctl" id="csend">Envoyer</button></div></div>
   </div>
   <div class="sw" role="group" aria-label="Couleur des billes"><span id="bl"></span>
     <button style="--c:#e6d3a3" data-c="#e6d3a3" aria-label="Ivoire"></button>
@@ -140,14 +156,19 @@ ha:{nm:"Hausa (beta)",sub:"Kama fiye da iri 24 don ka yi nasara.",mAi:"Kai kaɗa
 r1:"Taɓa ɗaya daga cikin ramukanka (layin ƙasa): ana shuka irinsa ɗaya bayan ɗaya, a kishiyar agogo.",r2:"Idan akwai iri 12 ko fiye, ana tsallake ramin farawa.",r3:"Idan irin ƙarshe ya faɗi a ramin abokin hamayya wanda ya zama yana da iri 2 ko 3, ka kama su tare da ramukan da suka gabata masu iri 2 ko 3.",r4:"Kamawar da za ta wofintar da dukan layin abokin hamayya an soke ta.",r5:"Idan abokin hamayya ba shi da iri, dole ka ba shi idan zai yiwu.",r6:"Idan babu motsi da zai yiwu, kowa yana riƙe irin layinsa.",
 you:"Kai",cpu:"Kwamfuta",adv:"Abokin hamayyarka",pl:"ɗan wasa {0}",hm:"Ramin layinka",ho:"Ramin layin abokin hamayya",hs:"iri {0}",stats:"Da kwamfuta: nasara {0}, rashin nasara {1}, canjaras {2}",draw:"Canjaras, {0} da {1}.",winU:"Ka yi nasara {0} da {1}!",winO:"{0} ya yi nasara {1} da {2}!",tAi:"Lokacinka: taɓa rami mai farin layi.",think:"Kwamfuta tana tunani…",tMe:"Lokacinka.",tOp:"Lokacin abokin hamayyarka…",tPl:"{0}, lokacinka.",cap:"+iri {0} an kama",err:"Ba zai yiwu ba: damarka dole ta zama aƙalla Mai Ba da Gudummawa.",rmW:"Ana iya sake wasa idan wasan ya ƙare.",st0:"Ƙirƙiri wasa ko ka shiga ɗaya da lamba.",wait:"Lamba {0}: ana jiran abokin hamayyarka…",needAcc:"Wasa ta intanet yana buƙatar buɗe wannan shafi da asusun Claude naka.",slow:"Haɗin yana jinkiri… jira ko sake gwadawa.",share:"Wasa {0}: ba abokinka wannan lambar.",unk:"Lamba ba a sani ba. Duba ka sake gwadawa.",full:"Wannan wasa yana da ’yan wasa biyu tuni.",lost:"Haɗi da wasan ya ɓace.",rd:"Ba a iya karanta wasan ba."}
 };
+const EX={"fr": {"oth": "Autre langue…", "olp": "Langue (ex. Wolof)", "olg": "Traduire", "tr": "Traduction auto : activée", "trf": "Traduction auto : désactivée", "olw": "Traduction en cours…", "olf": "Traduction impossible."}, "en": {"oth": "Other language…", "olp": "Language (e.g. Wolof)", "olg": "Translate", "tr": "Auto-translate: on", "trf": "Auto-translate: off", "olw": "Translating…", "olf": "Translation failed."}, "es": {"oth": "Otro idioma…", "olp": "Idioma (p. ej. wolof)", "olg": "Traducir", "tr": "Traducción auto: activada", "trf": "Traducción auto: desactivada", "olw": "Traduciendo…", "olf": "No se pudo traducir."}, "pt": {"oth": "Outro idioma…", "olp": "Idioma (ex. wolof)", "olg": "Traduzir", "tr": "Tradução auto: ativada", "trf": "Tradução auto: desativada", "olw": "A traduzir…", "olf": "Falha na tradução."}, "ar": {"oth": "لغة أخرى…", "olp": "اللغة (مثل الولوف)", "olg": "ترجم", "tr": "الترجمة التلقائية: مفعّلة", "trf": "الترجمة التلقائية: متوقفة", "olw": "جارٍ الترجمة…", "olf": "تعذّرت الترجمة."}, "sw": {"oth": "Lugha nyingine…", "olp": "Lugha (mf. Kiwolof)", "olg": "Tafsiri", "tr": "Tafsiri otomatiki: imewashwa", "trf": "Tafsiri otomatiki: imezimwa", "olw": "Inatafsiri…", "olf": "Tafsiri imeshindikana."}, "de": {"oth": "Andere Sprache…", "olp": "Sprache (z. B. Wolof)", "olg": "Übersetzen", "tr": "Auto-Übersetzung: an", "trf": "Auto-Übersetzung: aus", "olw": "Übersetze…", "olf": "Übersetzung fehlgeschlagen."}, "zh": {"oth": "其他语言…", "olp": "语言（如沃洛夫语）", "olg": "翻译", "tr": "自动翻译：开", "trf": "自动翻译：关", "olw": "正在翻译…", "olf": "翻译失败。"}, "hi": {"oth": "अन्य भाषा…", "olp": "भाषा (जैसे वोलोफ़)", "olg": "अनुवाद करें", "tr": "स्वतः अनुवाद: चालू", "trf": "स्वतः अनुवाद: बंद", "olw": "अनुवाद हो रहा है…", "olf": "अनुवाद विफल रहा।"}, "ha": {"oth": "Wani harshe…", "olp": "Harshe (misali Wolof)", "olg": "Fassara", "tr": "Fassara ta atomatik: a kunne", "trf": "Fassara ta atomatik: a kashe", "olw": "Ana fassara…", "olf": "Fassara ta gaza."}};
+for(const l in EX)Object.assign(D[l],EX[l]);
+try{const xl=JSON.parse(localStorage.getItem("awari-xl")||"{}");for(const k in xl){if(!/^x_[0-9a-f]+$/.test(k)||typeof xl[k]!=="object"||!xl[k])continue;const d={};for(const q in xl[k])if(typeof xl[k][q]==="string")d[q]=xl[k][q].slice(0,400);d.rtl=xl[k].rtl===true;if(d.nm)D[k]=d;}}catch(e){}
+const PS={fr:"Pseudo",en:"Nickname",es:"Apodo",pt:"Apelido",ar:"اسم مستعار",sw:"Jina la utani",de:"Spitzname",zh:"昵称",hi:"उपनाम",ha:"Suna"};
+for(const l in PS)D[l].ps=PS[l];
 let LANG=(()=>{let l=null;try{l=localStorage.getItem("awari-lang");}catch(e){}
   if(!l||!D[l])l=((navigator.language||"fr").slice(0,2));
   return D[l]?l:"fr";})();
 function T(k,...a){return(D[LANG][k]??D.fr[k]??k).replace(/\{(\d)\}/g,(_,i)=>a[i]);}
 function applyLang(){
   const set=(s,v,attr)=>{const e=document.querySelector(s);if(!e)return;attr?e.setAttribute(attr,v):e.textContent=v;};
-  document.documentElement.lang=LANG;
-  document.documentElement.dir=LANG==="ar"?"rtl":"ltr";
+  document.documentElement.lang=LANG.startsWith("x_")?"":LANG;
+  document.documentElement.dir=(LANG==="ar"||D[LANG].rtl)?"rtl":"ltr";
   set("#sub",T("sub"));set("#rules",T("rules"));set("#bl",T("bl"));
   [["ai","mAi"],["2p","m2p"],["remote","mRem"]].forEach(([v,k])=>set('#mode option[value="'+v+'"]',T(k)));
   [1,2,3,4].forEach(n=>set('#level option[value="'+n+'"]',T("l"+n)));
@@ -159,8 +180,9 @@ function applyLang(){
   if(q[1]){q[1].textContent=q[1].dataset.q=T("q1");q[2].textContent=q[2].dataset.q=T("q2");}
   set("#snd",T(sound?"so":"sf"));
   if(!R.ref)set("#rinfo",T("ri0"));
-  const sel=$("#lang");if(sel&&!sel.options.length)Object.keys(D).forEach(k=>sel.add(new Option(D[k].nm,k)));
-  if(sel)sel.value=LANG;
+  const sel=$("#lang");
+  if(sel){sel.textContent="";Object.keys(D).forEach(k=>sel.add(new Option(D[k].nm,k)));if(window.claude)sel.add(new Option(T("oth"),"__other"));sel.value=LANG;}
+  set("#trb",T(tr?"tr":"trf"));set("#olgo",T("olg"));set("#olang",T("olp"),"placeholder");set("#pseudo",T("ps"),"placeholder");
 }
 
 const $=s=>document.querySelector(s);
@@ -271,10 +293,11 @@ function render(view,o={}){
 function nameOf(seat){
   const m=mode();
   if(m==="ai")return seat===0?T("you"):T("cpu");
-  if(m==="remote")return seat===me?T("you"):T("adv");
+  if(m==="remote")return seat===me?T("you"):((me===0?R.gn:R.hn)||T("adv"));
   return T("pl",seat+1);
 }
 function status(){
+  $("#new").textContent=(mode()==="remote"&&over)?T("rm"):T("nw");
   $("#nbot").textContent=nameOf(me);$("#ntop").textContent=nameOf(1-me);
   const m=mode();
   $("#bot").classList.toggle("on",!over&&st.t===me);
@@ -331,17 +354,92 @@ async function maybeAI(){
 function fresh(){return{b:Array(12).fill(4),s:[0,0],t:0,n:0};}
 async function newGame(){
   if(mode()==="remote"){
-    if(R.ref&&me===0){
-      try{await R.ref.update({...fresh(),last:null});}catch(e){}
-    }
-    st=fresh();busy=false;over=false;render(st.b);status();return;
+    if(!R.ref)return;
+    if(!over){$("#msg").textContent=T("rmW");return;}
+    const r=(R.r||0)+1;
+    try{await R.ref.update({...fresh(),t:r%2,last:null,r});}catch(e){$("#msg").textContent=T("err");}
+    return;
   }
   st=fresh();me=0;busy=false;over=false;hist=[];recorded=false;
   render(st.b);status();
 }
 
 /* ---- À distance ---- */
+let tr=false,S=null;const TC={},PEND=new Set();
+async function getSample(){try{if(!window.claude)return null;S=S||await claude.use("sample");}catch(e){S=null;}return S;}
+async function translateMsg(t){
+  const k=LANG+"|"+t;if(PEND.has(k))return;PEND.add(k);
+  const s=await getSample();
+  if(!s){tr=false;PEND.delete(k);applyLang();return;}
+  const nm=D[LANG].nm.replace(/\s*\(.*\)/,"");
+  try{
+    const r=await s("Translate this chat message into "+nm+". If it is already in "+nm+", reply with it unchanged. Reply with the translation only, nothing else.\n\n"+t,{modelTier:"quick",cache:false});
+    TC[k]=(r.text||"").trim()||t;
+  }catch(e){TC[k]=t;if(e&&e.code==="not_granted"){tr=false;applyLang();}}
+  PEND.delete(k);updateChat();
+}
+async function translateUI(name){
+  const s=await getSample();
+  if(!s)return false;
+  const src={};Object.keys(D.fr).forEach(k=>{if(k!=="nm")src[k]=D.fr[k];});
+  const out=await s.json("Translate the string values of this JSON object from French into "+name+". Keep every key, keep placeholders such as {0} and {1} unchanged, keep emoji. Add a key nm with the language name written in that language, and a key rtl set to true if the language is written right-to-left, otherwise false. Return only the JSON object.\n\n"+JSON.stringify(src),{modelTier:"default",cache:false});
+  const d={};
+  Object.keys(src).forEach(k=>{if(typeof out[k]==="string")d[k]=out[k].slice(0,400);});
+  if(Object.keys(d).length<30)return false;
+  d.nm=(typeof out.nm==="string"&&out.nm?out.nm:name)+" ✦";d.rtl=out.rtl===true;
+  const key="x_"+Array.from(name.toLowerCase()).map(c=>c.charCodeAt(0).toString(16)).join("").slice(0,24);
+  D[key]=d;
+  try{const all=JSON.parse(localStorage.getItem("awari-xl")||"{}");all[key]=d;localStorage.setItem("awari-xl",JSON.stringify(all));}catch(e){}
+  LANG=key;try{localStorage.setItem("awari-lang",key);}catch(e){}
+  return true;
+}
+function validState(d){
+  const ok=v=>Number.isInteger(v)&&v>=0;
+  return !!d&&Array.isArray(d.b)&&d.b.length===12&&d.b.every(ok)&&Array.isArray(d.s)&&d.s.length===2&&d.s.every(ok)&&
+    d.b.reduce((a,v)=>a+v,0)+d.s[0]+d.s[1]===48&&(d.t===0||d.t===1)&&ok(d.n);
+}
+function pseudo(){try{return(localStorage.getItem("awari-pseudo")||"").trim().slice(0,16);}catch(e){return"";}}
+let seen=null;
+function updateChat(){
+  const box=$("#chat");
+  box.style.display=(R.ref&&R.guest)?"block":"none";
+  const log=$("#clog"),ms=R.chat||[];
+  log.textContent="";
+  ms.forEach(m=>{
+    const d=document.createElement("div");
+    d.className="m "+(m.s===me?"me":"op");
+    d.textContent=(m.s!==me&&((me===0?R.gn:R.hn)||"")?(me===0?R.gn:R.hn)+" : ":"")+m.t;
+    if(m.s!==me&&tr){
+      const x=TC[LANG+"|"+m.t];
+      if(x===undefined||x!==m.t){
+        const sm=document.createElement("small");
+        sm.style.cssText="display:block;opacity:.8;font-style:italic;margin-top:2px";
+        sm.textContent=x===undefined?"…":x;d.appendChild(sm);
+      }
+      if(x===undefined)translateMsg(m.t);
+    }
+    log.appendChild(d);
+  });
+  log.scrollTop=log.scrollHeight;
+  if(seen!==null&&ms.length>seen&&ms[ms.length-1].s!==me){
+    blip(880,.12);
+    if(document.hidden)document.title="💬 Nouveau message";
+  }
+  seen=ms.length;
+}
+async function sendChat(txt){
+  const el=$("#ctext"),own=typeof txt==="string";
+  const t=(own?txt:el.value).trim().slice(0,120);
+  if(!t||!R.ref)return;
+  if(!own)el.value="";
+  const msgs=(R.chat||[]).concat({s:me,t}).slice(-30);
+  R.chat=msgs;updateChat();
+  try{await R.ref.update({chat:msgs});}catch(e){$("#rinfo").textContent=T("err");}
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)document.title="Awari";});
+document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>sendChat(b.dataset.q));
 function leave(){
+  seen=null;
   if(R.unsub){try{R.unsub();}catch(e){}}
   R.unsub=null;R.ref=null;R.code=null;R.guest=null;R.host=null;R.ready=false;
 }
@@ -363,13 +461,17 @@ function listen(code){
     clearTimeout(timer);
     if(!snap.exists)return;
     const d=snap.data();
-    R.host=d.host;R.guest=d.guest||null;R.ready=true;
+    if(!validState(d)){$("#rinfo").textContent=T("rd");return;}
+    R.host=d.host;R.guest=d.guest||null;R.hn=String(d.hn||"").slice(0,16);R.gn=String(d.gn||"").slice(0,16);R.ready=true;R.r=d.r||0;R.chat=Array.isArray(d.chat)?d.chat.filter(m=>m&&typeof m.t==="string"&&(m.s===0||m.s===1)).slice(-30).map(m=>({s:m.s,t:m.t.slice(0,120)})):[];updateChat();
+    try{localStorage.setItem("awari-room",R.code);}catch(e){}
     $("#rinfo").textContent=T("share",code);
     if(d.n>st.n&&!busy){
-      if(d.n===st.n+1&&d.last!=null&&d.t!==me){
+      if(d.n===st.n+1&&Number.isInteger(d.last)&&st.t!==me){
+        if(!legal(st).includes(d.last)){$("#rinfo").textContent=T("rd");return;}
         const ns=apply(st,d.last);
+        if(ns.t!==d.t||JSON.stringify(ns.b)!==JSON.stringify(d.b)){$("#rinfo").textContent=T("rd");return;}
         await animate(d.last,ns);
-        commit({b:d.b,s:d.s,t:d.t,n:d.n});
+        commit(ns);
       }else{
         commit({b:d.b,s:d.s,t:d.t,n:d.n});
       }
@@ -384,11 +486,11 @@ async function createGame(){
   const A="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   let code,ok=false;
   for(let k=0;k<4&&!ok;k++){
-    code="";for(let q=0;q<5;q++)code+=A[Math.floor(Math.random()*A.length)];
+    code="";{const u=new Uint32Array(5);crypto.getRandomValues(u);for(let q=0;q<5;q++)code+=A[u[q]%A.length];}
     try{const s=await R.db.doc("awari/"+code).get();ok=!s.exists;}catch(e){break;}
   }
   try{
-    await R.db.doc("awari/"+code).set({...fresh(),last:null,host:R.uid,guest:null});
+    await R.db.doc("awari/"+code).set({...fresh(),last:null,host:R.uid,guest:null,r:0,chat:[],hn:pseudo()});
   }catch(e){$("#rinfo").textContent=T("err");return;}
   me=0;st=fresh();busy=false;over=false;
   listen(code);render(st.b);status();
@@ -400,12 +502,13 @@ async function joinGame(){
   try{snap=await R.db.doc("awari/"+code).get();}catch(e){$("#rinfo").textContent=T("rd");return;}
   if(!snap.exists){$("#rinfo").textContent=T("unk");return;}
   const d=snap.data();
+  if(!validState(d)){$("#rinfo").textContent=T("rd");return;}
   leave();
   if(d.host===R.uid)me=0;
   else if(!d.guest||d.guest===R.uid){
     me=1;
     if(!d.guest){
-      try{await R.db.doc("awari/"+code).update({guest:R.uid});}
+      try{await R.db.doc("awari/"+code).update({guest:R.uid,gn:pseudo()});}
       catch(e){$("#rinfo").textContent=T("err");return;}
     }
   }else{$("#rinfo").textContent=T("full");return;}
@@ -423,12 +526,15 @@ $("#new").onclick=newGame;
 $("#create").onclick=createGame;
 $("#join").onclick=joinGame;
 $("#mode").onchange=()=>{
-  leave();
-  
+  leave();updateChat();
+  try{localStorage.removeItem("awari-room");}catch(e){}
+  $("#remote").style.display=mode()==="remote"?"block":"none";
   $("#level").style.display=mode()==="ai"?"":"none";
   me=0;st=fresh();busy=false;over=false;hist=[];recorded=false;render(st.b);status();
 };
 $("#undo").onclick=undo;
+$("#csend").onclick=sendChat;
+$("#ctext").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
 $("#snd").onclick=()=>{sound=!sound;$("#snd").textContent=T(sound?"so":"sf");};
 document.addEventListener("keydown",e=>{
   if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
@@ -439,7 +545,9 @@ document.addEventListener("keydown",e=>{
   ok[k<0?0:nx].focus();e.preventDefault();
 });
 showStats();
+let saved=null;try{saved=localStorage.getItem("awari-room");}catch(e){}
 $("#mode").onchange();
+if(saved){$("#mode").value="remote";$("#mode").onchange();$("#code").value=saved;joinGame();}
 
 function setSeed(c){
   document.documentElement.style.setProperty("--seed",c);
@@ -450,7 +558,24 @@ document.querySelectorAll(".sw button").forEach(b=>b.onclick=()=>setSeed(b.datas
 (function(){let c="#e6d3a3";try{c=localStorage.getItem("awari-seed")||c;}catch(e){}setSeed(c);})();
 $("#level").onchange=()=>{if(!busy)render(st.b);};
 
-$("#lang").onchange=()=>{LANG=$("#lang").value;try{localStorage.setItem("awari-lang",LANG);}catch(e){}applyLang();render(st.b);status();showStats();};
+$("#lang").onchange=()=>{
+  const v=$("#lang").value;
+  if(v==="__other"){$("#ol").style.display="flex";$("#lang").value=LANG;$("#olang").focus();return;}
+  LANG=v;try{localStorage.setItem("awari-lang",LANG);}catch(e){}
+  applyLang();render(st.b);status();showStats();updateChat();
+};
+$("#pseudo").value=pseudo();
+$("#pseudo").oninput=()=>{try{localStorage.setItem("awari-pseudo",$("#pseudo").value.trim().slice(0,16));}catch(e){}};
+$("#trb").onclick=async()=>{tr=!tr;if(tr&&!await getSample())tr=false;applyLang();updateChat();};
+$("#olgo").onclick=async()=>{
+  const name=$("#olang").value.trim();if(!name)return;
+  $("#olgo").disabled=true;$("#msg").textContent=T("olw");
+  let ok=false;try{ok=await translateUI(name);}catch(e){ok=false;}
+  $("#olgo").disabled=false;
+  if(ok){$("#ol").style.display="none";$("#olang").value="";}
+  applyLang();render(st.b);status();showStats();updateChat();
+  if(!ok)$("#msg").textContent=T("olf");
+};
 applyLang();render(st.b);status();showStats();
 
 /* Publicité (désactivée par défaut) : renseignez vos identifiants AdSense puis hébergez la page sur votre site. */
