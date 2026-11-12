@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.idjanimade.awari",
+        "sha256_cert_fingerprints": ["88:B4:C7:9A:4F:7D:B2:01:CF:0E:10:AF:16:42:FE:81:7C:EA:88:BD:ED:50:4B:A0:69:20:8A:BF:C9:07:0C:25"]
+      }
+    }]
